@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="allegro_hand">
+  <!-- args -->
+  <xacro:arg name="chirality" default="undefined"/>
+  <xacro:arg name="prefix" default=""/>
+
+  <!-- ur5 robot -->
+  <xacro:include filename="$(find allegro_hand_description)/description/allegro_hand_description.urdf.xacro" />
+
+
+  <!-- Root link -->
+  <link name="world"/>
+
+  <xacro:allegro_hand chirality="$(arg chirality)" parent="world" prefix="$(arg prefix)" ur5_attachment="true" desk_stand="true">
+    <origin xyz="0.0 0.0 0" rpy="0.0 0 0.0"/>
+  </xacro:allegro_hand>
+</robot>

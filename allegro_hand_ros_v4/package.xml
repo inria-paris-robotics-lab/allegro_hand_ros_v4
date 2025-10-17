@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+    <name>allegro_hand_ros_v4</name>
+    <version>2.0.1</version>
+    <description>The allegro_hand_ros_v4 meta-package</description>
+
+    <maintainer email="etienne.arlaud@inria.fr">EtienneAr</maintainer>
+
+    <license>BSD</license>
+
+    <!-- dependencies -->
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <run_depend>allegro_hand</run_depend>
+    <run_depend>allegro_hand_controllers</run_depend>
+    <run_depend>allegro_hand_description</run_depend>
+    <run_depend>allegro_hand_driver</run_depend>
+
+    <!-- The export tag contains other, unspecified, tags -->
+    <export>
+        <!-- Other tools can request additional information be placed here -->
+    </export>
+</package>

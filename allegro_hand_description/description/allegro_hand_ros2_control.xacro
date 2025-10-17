@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:macro name="allegro_hand_ros2_control" params="name prefix initial_positions_file real_hardware">
+        
+        <xacro:property name="initial_positions" value="${xacro.load_yaml(initial_positions_file)['initial_positions']}"/>
+
+        <ros2_control name="${name}" type="system">
+            <xacro:unless value="${real_hardware}">
+              <hardware>
+                <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+              </hardware>
+            </xacro:unless>
+
+            <xacro:macro name="joint_definition" params="joint_name initial_pos">
+              <joint name="${prefix}_${joint_name}">
+                <command_interface name="effort"/>
+                <state_interface name="effort"/>
+                <state_interface name="position">
+                  <param name="initial_value">${initial_positions[initial_pos]}</param>
+                </state_interface>
+                <state_interface name="velocity"/>
+              </joint>
+            </xacro:macro>
+
+
+            <xacro:joint_definition joint_name="joint_00" initial_pos="joint_00" />
+            <xacro:joint_definition joint_name="joint_01" initial_pos="joint_01" />
+            <xacro:joint_definition joint_name="joint_02" initial_pos="joint_02" />
+            <xacro:joint_definition joint_name="joint_03" initial_pos="joint_03" />
+            <xacro:joint_definition joint_name="joint_04" initial_pos="joint_04" />
+            <xacro:joint_definition joint_name="joint_05" initial_pos="joint_05" />
+            <xacro:joint_definition joint_name="joint_06" initial_pos="joint_06" />
+            <xacro:joint_definition joint_name="joint_07" initial_pos="joint_07" />
+            <xacro:joint_definition joint_name="joint_08" initial_pos="joint_08" />
+            <xacro:joint_definition joint_name="joint_09" initial_pos="joint_09" />
+            <xacro:joint_definition joint_name="joint_10" initial_pos="joint_10" />
+            <xacro:joint_definition joint_name="joint_11" initial_pos="joint_11" />
+            <xacro:joint_definition joint_name="joint_12" initial_pos="joint_12" />
+            <xacro:joint_definition joint_name="joint_13" initial_pos="joint_13" />
+            <xacro:joint_definition joint_name="joint_14" initial_pos="joint_14" />
+            <xacro:joint_definition joint_name="joint_15" initial_pos="joint_15" />
+
+        </ros2_control>
+    </xacro:macro>
+</robot>

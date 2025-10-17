@@ -1,0 +1,40 @@
+<launch>
+  <arg name="CHIRALITY" doc="left|right depending on the model used"/>
+  <arg name="GAZEBO" default="false" doc="Start and use gazebo simulator or use real hand"/>
+  <arg name ="VISUALIZE" default="true" doc="Visualization with rviz. The allegro_viz.launch can also be started separatly." />
+  <arg name="AUTO_CAN" default="true" doc="If true, ignores CAN_DEVICE argument and finds the can device automagically"/>
+  <arg name="RESPAWN" default="false" doc="If true, respawn the controller if it dies."/>
+  <arg name="CAN_DEVICE" default="/dev/pcanusb1" doc="/dev/pcanusbNNN (ls -l /dev/pcan* to see open CAN devices)"/>
+  <arg name="HAND_NAME" default="allegro_hand_$(arg CHIRALITY)" doc="Arbitrary name for this particular hand"/>
+
+  <!-- Load the robot description -->
+  <param name="robot_description"
+         command="$(find xacro)/xacro
+                  $(find allegro_hand)/urdf/allegro_hand_on_stand.urdf.xacro
+                  chirality:=$(arg CHIRALITY)
+                  prefix:=$(arg HAND_NAME)"/>
+
+  <!-- Start vizualisation -->
+  <include file="$(find allegro_hand)/launch/allegro_viz.launch" if="$(arg VISUALIZE)">
+    <arg name="HAND_NAME" value="$(arg HAND_NAME)"/>
+  </include>
+
+  <!-- Allegro Hand controller and communication node. -->
+  <include file="$(find allegro_hand_controllers)/launch/allegro_hand_controllers.launch">
+     <arg name="hand_name" value="$(arg HAND_NAME)"/>
+     <arg name="gazebo" value="$(arg GAZEBO)"/>
+     <arg name="controller_yaml" value="$(find allegro_hand_controllers)/config/default_pos_controller.yaml"/>
+  </include>
+
+  <!-- Start a gazebo sim -->
+  <include if="$(arg GAZEBO)" file="$(find allegro_hand)/launch/_gazebo_standalone.launch">
+    <arg name="chirality" value="$(arg CHIRALITY)"/>
+    <arg name="hand_name" value="$(arg HAND_NAME)"/>
+  </include>
+
+  <!-- Joint States (angles) to Joint Transforms -->
+  <node name="jointState2tf_$(arg HAND_NAME)" pkg="robot_state_publisher" type="robot_state_publisher">
+    <remap from="joint_states" to="$(arg HAND_NAME)/joint_states"/>
+  </node>
+
+</launch>

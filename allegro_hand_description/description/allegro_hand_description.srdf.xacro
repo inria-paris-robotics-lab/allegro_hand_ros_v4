@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+
+    <xacro:macro name="allegro_hand_group_define" params="group_name prefix">
+        <group name="${group_name}">
+            <link name="${prefix}_palm_link"/>
+            <link name="${prefix}_link_00"/>
+            <link name="${prefix}_link_01"/>
+            <link name="${prefix}_link_02"/>
+            <link name="${prefix}_link_03"/>
+            <link name="${prefix}_link_04"/>
+            <link name="${prefix}_link_05"/>
+            <link name="${prefix}_link_06"/>
+            <link name="${prefix}_link_07"/>
+            <link name="${prefix}_link_08"/>
+            <link name="${prefix}_link_09"/>
+            <link name="${prefix}_link_10"/>
+            <link name="${prefix}_link_11"/>
+            <link name="${prefix}_link_12"/>
+            <link name="${prefix}_link_13"/>
+            <link name="${prefix}_link_14"/>
+            <link name="${prefix}_link_15"/>
+
+            <joint name="${prefix}_joint_00"/>
+            <joint name="${prefix}_joint_01"/>
+            <joint name="${prefix}_joint_02"/>
+            <joint name="${prefix}_joint_03"/>
+            <joint name="${prefix}_joint_04"/>
+            <joint name="${prefix}_joint_05"/>
+            <joint name="${prefix}_joint_06"/>
+            <joint name="${prefix}_joint_07"/>
+            <joint name="${prefix}_joint_08"/>
+            <joint name="${prefix}_joint_09"/>
+            <joint name="${prefix}_joint_10"/>
+            <joint name="${prefix}_joint_11"/>
+            <joint name="${prefix}_joint_12"/>
+            <joint name="${prefix}_joint_13"/>
+            <joint name="${prefix}_joint_14"/>
+            <joint name="${prefix}_joint_15"/>
+        </group>
+
+        <group_state name="open" group="${group_name}">
+            <joint name="${prefix}_joint_00" value="0.0"/>
+            <joint name="${prefix}_joint_01" value="0.0"/>
+            <joint name="${prefix}_joint_02" value="0.0"/>
+            <joint name="${prefix}_joint_03" value="0.0"/>
+            <joint name="${prefix}_joint_04" value="0.0"/>
+            <joint name="${prefix}_joint_05" value="0.0"/>
+            <joint name="${prefix}_joint_06" value="0.0"/>
+            <joint name="${prefix}_joint_07" value="0.0"/>
+            <joint name="${prefix}_joint_08" value="0.0"/>
+            <joint name="${prefix}_joint_09" value="0.0"/>
+            <joint name="${prefix}_joint_10" value="0.0"/>
+            <joint name="${prefix}_joint_11" value="0.0"/>
+            <joint name="${prefix}_joint_12" value="0.4"/>
+            <joint name="${prefix}_joint_13" value="0.0"/>
+            <joint name="${prefix}_joint_14" value="0.0"/>
+            <joint name="${prefix}_joint_15" value="0.0"/>
+        </group_state>
+    </xacro:macro>
+
+    <xacro:macro name="allegro_hand_autocol" params="prefix">
+        <disable_collisions link1="${prefix}_ur5_attachment" link2="${prefix}_palm_link" reason="Never"/>
+
+        <disable_collisions link1="${prefix}_palm_link" link2="${prefix}_link_00" reason="Never"/>
+        <disable_collisions link1="${prefix}_palm_link" link2="${prefix}_link_04" reason="Never"/>
+        <disable_collisions link1="${prefix}_palm_link" link2="${prefix}_link_08" reason="Never"/>
+        <disable_collisions link1="${prefix}_palm_link" link2="${prefix}_link_12" reason="Never"/>
+        <disable_collisions link1="${prefix}_palm_link" link2="${prefix}_link_13" reason="Never"/>
+
+        <disable_collisions link1="${prefix}_link_00" link2="${prefix}_link_01" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_04" link2="${prefix}_link_05" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_08" link2="${prefix}_link_09" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_12" link2="${prefix}_link_13" reason="Never"/>
+
+        <disable_collisions link1="${prefix}_link_01" link2="${prefix}_link_02" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_05" link2="${prefix}_link_06" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_09" link2="${prefix}_link_10" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_13" link2="${prefix}_link_14" reason="Never"/>
+
+        <disable_collisions link1="${prefix}_link_02" link2="${prefix}_link_03" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_06" link2="${prefix}_link_07" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_10" link2="${prefix}_link_11" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_14" link2="${prefix}_link_15" reason="Never"/>
+
+        <disable_collisions link1="${prefix}_link_03" link2="${prefix}_link_03_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_07" link2="${prefix}_link_07_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_11" link2="${prefix}_link_11_tip" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_15" link2="${prefix}_link_15_tip" reason="Never"/>
+    </xacro:macro>
+
+    <xacro:macro name="allegro_hand_col_with" params="prefix link">
+        <disable_collisions link1="${prefix}_ur5_attachment" link2="${link}" reason="Never"/>
+
+        <disable_collisions link1="${prefix}_palm_link" link2="${link}" reason="Never"/>
+
+        <disable_collisions link1="${prefix}_link_00" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_01" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_02" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_03" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_04" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_05" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_06" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_07" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_08" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_09" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_10" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_11" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_12" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_13" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_14" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_15" link2="${link}" reason="Never"/>
+
+        <disable_collisions link1="${prefix}_link_03_tip" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_07_tip" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_11_tip" link2="${link}" reason="Never"/>
+        <disable_collisions link1="${prefix}_link_15_tip" link2="${link}" reason="Never"/>
+    </xacro:macro>
+</robot>

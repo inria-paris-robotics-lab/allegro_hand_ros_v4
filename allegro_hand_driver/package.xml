@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>allegro_hand_driver</name>
+  <version>1.0.0</version>
+  <description>The low-level driver for communicating with the Allegro Hand.</description>
+
+  <maintainer email="wonikrobotics@gmail.com">Wonikrobotics-git</maintainer>
+  <license>BSD</license>
+  <url type="website">https://www.allegrohand.com/</url>
+  <url type="website">https://github.com/Wonikrobotics-git/</url>
+
+  <author email="jh.bong@wonikrobotics.com">JinHwon Bong</author>
+  <author email="j.y_lee@wonikrobotics.com">JungYeon Lee</author>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>rosidl_typesupport_c</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

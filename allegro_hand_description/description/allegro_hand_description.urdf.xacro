@@ -1,0 +1,639 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="allegro_hand">
+
+    <xacro:include filename="$(find allegro_hand_description)/description/allegro_hand_ros2_control.xacro" />
+
+    <xacro:macro name="allegro_hand" params="chirality parent *origin prefix real_hardware:=false ur5_attachment:=false desk_stand:=false last_links_inertia_factor=1.0">
+
+        <!-- ======================== CHIRALITY PARAMS ========================= -->
+        <xacro:property name="suffix" value="${chirality}"/>
+        <xacro:property name="minus_left"  value="${-1 if suffix == 'left' else  1}"/>
+        <xacro:property name="minus_right" value="${-1 if suffix == 'right' else  1}"/>
+        <xacro:property name="zero_left"   value="${0 if suffix == 'left' else 1}"/>
+        <xacro:property name="zero_right"  value="${0 if suffix == 'right' else 1}"/>
+
+        <xacro:if value="${minus_right * minus_left != -1}">
+        INVALID CHIRALITY, MUST BE "left" OR "right"
+        </xacro:if>
+
+        <xacro:property name="DEG2RAD" value="0.01745329251"/>
+
+        <!-- ======================== BASE PARAMS ========================= -->
+        <xacro:property name="palm_link_z" value="0.095"/>
+        <xacro:property name="palm_link_x" value="-0.009300"/>
+        <xacro:property name="init_pos_file" value="$(find allegro_hand_description)/config/initial_position.yaml"/>
+
+
+        <!-- ======================== FINGER PARAMS ======================== -->
+        <xacro:property name="links_x" value="0.0196"/>
+        <xacro:property name="links_y" value="0.0275"/>
+        <xacro:property name="link0_z" value="0.0164"/>
+        <xacro:property name="link1_z" value="0.0540"/>
+        <xacro:property name="link2_z" value="0.0384"/>
+
+        <!-- full height from joint to tip. when used,
+        the radius of the finger tip sphere will be subtracted
+        and one fixed link will be added for the tip. -->
+        <xacro:property name="link3_z" value="0.0387"/>
+        <xacro:property name="fingerTip_r" value="0.0120"/>
+        <xacro:property name="offset_origin_x_const" value="0"/>
+        <xacro:property name="offset_origin_y_const" value="0.0435"/>
+        <xacro:property name="offset_origin_z_const" value="-0.001542"/>
+        <xacro:property name="offset_origin_z_mid_const" value="0.0007"/>
+
+        <!-- ========================= THUMB PARAMS ========================= -->
+        <xacro:property name="link0_t_x" value="0.0358"/>
+        <xacro:property name="link0_t_y" value="0.0340"/>
+        <xacro:property name="link0_t_z" value="0.0455"/>
+        <xacro:property name="link1_t_z" value="0.0177"/>
+        <xacro:property name="link2_t_z" value="0.0514"/>
+        <xacro:property name="link3_t_z" value="0.0543"/>
+
+        <!-- ========================= LIMITS ========================= -->
+        <xacro:property name="joint_safety_margin" value="0.1"/>
+        <xacro:property name="limit_0_up" value="0.57"/>
+        <xacro:property name="limit_0_low" value="-0.57"/>
+        <xacro:property name="limit_1_up" value="1.71"/>
+        <xacro:property name="limit_1_low" value="-0.296"/>
+        <xacro:property name="limit_2_up" value="1.809"/>
+        <xacro:property name="limit_2_low" value="-0.274"/>
+        <xacro:property name="limit_3_up" value="1.718"/>
+        <xacro:property name="limit_3_low" value=" -0.327"/>
+        <xacro:property name="limit_0_t_up" value="1.496"/>
+        <xacro:property name="limit_0_t_low" value="0.363"/>
+        <xacro:property name="limit_1_t_up" value="1.263"/>
+        <xacro:property name="limit_1_t_low" value="-0.205"/>
+        <xacro:property name="limit_2_t_up" value="1.744"/>
+        <xacro:property name="limit_2_t_low" value="-0.289"/>
+        <xacro:property name="limit_3_t_up" value="1.819"/>
+        <xacro:property name="limit_3_t_low" value="-0.262"/>
+
+        <!-- ============================= HAND and FINGERS ============================== -->
+        <!-- PALM -->
+        <link name="${prefix}_palm_link">
+            <visual>
+                <geometry>
+                    <mesh filename="file://$(find allegro_hand_description)/meshes/hand/base_link_${suffix}.stl"/>
+                </geometry>
+                <material name="black">
+                    <color rgba=".2 .2 .2 1"/>
+                </material>
+            </visual>
+
+            <collision>
+                <geometry>
+                    <mesh filename="file://$(find allegro_hand_description)/meshes/hand/base_link_${suffix}_collision.stl"/>
+                </geometry>
+            </collision>
+
+            <inertial>
+                <origin xyz="0 0 ${palm_link_z/2}" rpy="0 0 0"/>
+                <mass value="0.4154"/>
+                <inertia
+                    ixx="1e-4" ixy="0.0" ixz="0.0"
+                    iyy="1e-4" iyz="0.0"
+                    izz="1e-4"/>
+            </inertial>
+        </link>
+
+        <!-- THUMB MACRO -->
+        <xacro:macro name="thumb"
+                    params="finger_num offset_origin_x offset_origin_y offset_origin_z finger_angle_r finger_angle_p finger_angle_y">
+
+            <!-- [LINK 12] -->
+            <link name="${prefix}_link_${'%02d' % (finger_num*4+0)}">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_12_${suffix}.stl"/>
+                    </geometry>
+                    <material name="black">
+                        <color rgba=".2 .2 .2 1"/>
+                    </material>
+                    <origin rpy="${zero_right * 180*DEG2RAD} 0 0" xyz="0 0 0"/>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_12_${suffix}_collision.stl"/>
+                    </geometry>
+                    <origin rpy="${zero_right * 180*DEG2RAD} 0 0" xyz="0 0 0"/>
+                </collision>
+
+                <inertial>
+                    <mass value="0.0176" />
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
+                            iyz="0." izz="1e-5" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_joint_${'%02d' % (finger_num*4+0)}" type="revolute">
+                <axis xyz="${minus_right} 0 0"/>
+                <limit effort="0.71" velocity="9.5"
+                    lower="${limit_0_t_low+joint_safety_margin}"
+                    upper="${limit_0_t_up-joint_safety_margin}"/>
+                <parent link="${prefix}_palm_link"/>
+                <child link="${prefix}_link_${'%02d' % (finger_num*4+0)}"/>
+                <origin rpy="${finger_angle_r} ${finger_angle_p} ${finger_angle_y}"
+                        xyz="${offset_origin_x} ${offset_origin_y} ${offset_origin_z}"/>
+                <dynamics damping="0.1" friction="0.01"/>
+            </joint>
+
+            <!-- [LINK 13] -->
+            <link name="${prefix}_link_${'%02d' % (finger_num*4+1)}">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_13.stl"/>
+                    </geometry>
+                    <material name="black">
+                        <color rgba=".2 .2 .2 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_13_collision.stl"/>
+                    </geometry>
+                </collision>
+
+                <inertial>
+                    <mass value="0.0119" />
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
+                            iyz="0." izz="1e-5" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_joint_${'%02d' % (finger_num*4+1)}" type="revolute">
+                <axis xyz="0 0 ${minus_left}"/>
+                <limit effort="0.71" velocity="9.5"
+                    lower="${limit_1_t_low+joint_safety_margin}"
+                    upper="${limit_1_t_up-joint_safety_margin}"/>
+                <parent link="${prefix}_link_${'%02d' % (finger_num*4+0)}"/>
+                <child link="${prefix}_link_${'%02d' % (finger_num*4+1)}"/>
+                <origin xyz="-0.027 ${minus_left * 0.005} 0.0399"/>
+                <dynamics damping="0.1" friction="0.01"/>
+            </joint>
+
+            <!-- [LINK 14] -->
+            <link name="${prefix}_link_${'%02d' % (finger_num*4+2)}">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_14.stl"/>
+                    </geometry>
+                    <material name="black">
+                        <color rgba=".2 .2 .2 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_14_collision.stl"/>
+                    </geometry>
+                </collision>
+
+                <inertial>
+                    <mass value="0.038" />
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
+                            iyz="0." izz="1e-5" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_joint_${'%02d' % (finger_num*4+2)}" type="revolute">
+                <axis xyz="0 1 0"/>
+                <limit effort="0.71" velocity="9.5"
+                    lower="${limit_2_t_low+joint_safety_margin}"
+                    upper="${limit_2_t_up-joint_safety_margin}"/>
+                <parent link="${prefix}_link_${'%02d' % (finger_num*4+1)}"/>
+                <child link="${prefix}_link_${'%02d' % (finger_num*4+2)}"/>
+                <origin xyz="0 0 ${link1_t_z}"/>
+                <dynamics damping="0.1" friction="0.01"/>
+            </joint>
+
+            <!-- [LINK 15] -->
+            <link name="${prefix}_link_${'%02d' % (finger_num*4+3)}">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_15.stl"/>
+                    </geometry>
+                    <material name="black">
+                        <color rgba=".2 .2 .2 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_15_collision.stl"/>
+                    </geometry>
+                </collision>
+
+                <inertial>
+                    <mass value="0.0388" />
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
+                                iyz="0." izz="1e-5" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_joint_${'%02d' % (finger_num*4+3)}" type="revolute">
+                <axis xyz="0 1 0"/>
+                <limit effort="0.71" velocity="9.5"
+                    lower="${limit_3_t_low+joint_safety_margin}"
+                    upper="${limit_3_t_up-joint_safety_margin}"/>
+                <parent link="${prefix}_link_${'%02d' % (finger_num*4+2)}"/>
+                <child link="${prefix}_link_${'%02d' % (finger_num*4+3)}"/>
+                <origin xyz="0 0 ${link2_t_z}"/>
+                <dynamics damping="0.1" friction="0.01"/>
+            </joint>
+
+            <!-- [FINGER TIP] -->
+            <link name="${prefix}_link_${'%02d' % (finger_num*4+3)}_tip">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_15_tip.stl"/>
+                    </geometry>
+                    <material name="white">
+                        <color rgba=".9 .9 .9 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_15_tip_collision.stl"/>
+                    </geometry>
+                </collision>
+
+                <inertial>
+                    <mass value="0.0168" />
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                    <inertia ixx="${last_links_inertia_factor * 9.680e-05}" ixy="0.0" ixz="0.0"
+                            iyy="${last_links_inertia_factor * 9.680e-05}" iyz="0.0"
+                            izz="${last_links_inertia_factor * 9.680e-05}" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_joint_${'%02d' % (finger_num*4+3)}_tip" type="fixed">
+                <parent link="${prefix}_link_${'%02d' % (finger_num*4+3)}"/>
+                <child link="${prefix}_link_${'%02d' % (finger_num*4+3)}_tip"/>
+                <origin rpy="0 0 0" xyz="0 0 ${link3_t_z-fingerTip_r}"/>
+            </joint>
+        </xacro:macro>
+        <!-- END THUMB MACRO -->
+
+        <!-- THREE FINGER MACRO -->
+        <xacro:macro name="finger"
+                    params="finger_num offset_origin_x offset_origin_y offset_origin_z finger_angle_r">
+
+            <!-- [LINK 0, 4, 8] -->
+            <link name="${prefix}_link_${'%02d' % (finger_num*4+0)}">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_0.stl"/>
+                    </geometry>
+                    <material name="black">
+                        <color rgba=".2 .2 .2 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_0_collision.stl"/>
+                    </geometry>
+                </collision>
+
+                <inertial>
+                    <mass value="0.0119" />
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
+                            iyz="0." izz="1e-5" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_joint_${'%02d' % (finger_num*4+0)}" type="revolute">
+                <axis xyz="0 0 1"/>
+                <limit effort="0.71" velocity="9.5"
+                    lower="${limit_0_low+joint_safety_margin}"
+                    upper="${limit_0_up-joint_safety_margin}"/>
+                <parent link="${prefix}_palm_link"/>
+                <child link="${prefix}_link_${'%02d' % (finger_num*4+0)}"/>
+                <origin rpy="${finger_angle_r} 0 0"
+                        xyz="${offset_origin_x} ${offset_origin_y} ${offset_origin_z}"/>
+                <dynamics damping="0.1" friction="0.01"/>
+            </joint>
+
+            <!-- [LINK 1, 5, 9] -->
+            <link name="${prefix}_link_${'%02d' % (finger_num*4+1)}">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_1.stl"/>
+                    </geometry>
+                    <material name="black">
+                        <color rgba=".2 .2 .2 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_1_collision.stl"/>
+                    </geometry>
+                </collision>
+
+                <inertial>
+                    <mass value="0.065" />
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
+                            iyz="0." izz="1e-5" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_joint_${'%02d' % (finger_num*4+1)}" type="revolute">
+                <limit effort="0.71" velocity="9.5"
+                    lower="${limit_1_low+joint_safety_margin}"
+                    upper="${limit_1_up-joint_safety_margin}"/>
+                <axis xyz="0 1 0"/>
+                <parent link="${prefix}_link_${'%02d' % (finger_num*4+0)}"/>
+                <child link="${prefix}_link_${'%02d' % (finger_num*4+1)}"/>
+                <origin xyz="0 0 ${link0_z}"/>
+                <dynamics damping="0.1" friction="0.01"/>
+            </joint>
+
+            <!-- [LINK 2, 6, 10]-->
+            <link name="${prefix}_link_${'%02d' % (finger_num*4+2)}">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_2.stl"/>
+                    </geometry>
+                    <material name="black">
+                        <color rgba=".2 .2 .2 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_2_collision.stl"/>
+                    </geometry>
+                </collision>
+
+                <inertial>
+                    <mass value="0.0355" />
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
+                            iyz="0." izz="1e-5" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_joint_${'%02d' % (finger_num*4+2)}" type="revolute">
+                <axis xyz="0 1 0"/>
+                <limit effort="0.71" velocity="9.5"
+                    lower="${limit_2_low+joint_safety_margin}"
+                    upper="${limit_2_up-joint_safety_margin}"/>
+                <parent link="${prefix}_link_${'%02d' % (finger_num*4+1)}"/>
+                <child link="${prefix}_link_${'%02d' % (finger_num*4+2)}"/>
+                <origin xyz="0 0 ${link1_z}"/>
+                <dynamics damping="0.1" friction="0.01"/>
+            </joint>
+
+            <!-- [LINK 3, 7, 11] -->
+            <link name="${prefix}_link_${'%02d' % (finger_num*4+3)}">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_3.stl"/>
+                    </geometry>
+                    <material name="black">
+                        <color rgba=".2 .2 .2 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_3_collision.stl"/>
+                    </geometry>
+                </collision>
+
+                <inertial>
+                    <mass value="0.0096" />
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
+                            iyz="0." izz="1e-5" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_joint_${'%02d' % (finger_num*4+3)}" type="revolute">
+                <axis xyz="0 1 0"/>
+                <limit effort="0.71" velocity="9.5"
+                    lower="${limit_3_low+joint_safety_margin}"
+                    upper="${limit_3_up-joint_safety_margin}"/>
+                <parent link="${prefix}_link_${'%02d' % (finger_num*4+2)}"/>
+                <child link="${prefix}_link_${'%02d' % (finger_num*4+3)}"/>
+                <origin xyz="0 0 ${link2_z}"/>
+                <dynamics damping="0.1" friction="0.01"/>
+            </joint>
+
+            <!-- [FINGER TIP] -->
+            <link name="${prefix}_link_${'%02d' % (finger_num*4+3)}_tip">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_3_tip.stl"/>
+                    </geometry>
+                    <material name="white">
+                        <color rgba=".9 .9 .9 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_3_tip_collision.stl"/>
+                    </geometry>
+                </collision>
+
+                <inertial>
+                <mass value="0.0168" />
+                    <origin xyz="0 0 0" rpy="0 0 0"/>
+                    <inertia ixx="${last_links_inertia_factor * 9.680e-05}" ixy="0.0" ixz="0.0"
+                            iyy="${last_links_inertia_factor * 9.680e-05}" iyz="0.0"
+                            izz="${last_links_inertia_factor * 9.680e-05}" />
+                </inertial>
+            </link>
+
+            <joint name="${prefix}_joint_${'%02d' % (finger_num*4+3)}_tip" type="fixed">
+                <parent link="${prefix}_link_${'%02d' % (finger_num*4+3)}"/>
+                <child link="${prefix}_link_${'%02d' % (finger_num*4+3)}_tip"/>
+                <origin rpy="0 0 0" xyz="0 0 ${link3_z-fingerTip_r}"/>
+            </joint>
+        </xacro:macro>
+        <!-- [[END]] THREE FINGER MACRO -->
+
+        <!-- ============================================================================= -->
+        <!-- FINGERS -->
+        <!-- RIGHT HAND due to which finger is number 0 -->
+        <!-- for LEFT HAND switch the sign of the **offset_origin_y** and **finger_angle_r** parameters-->
+        <xacro:finger
+                finger_num="${zero_right * 2}"
+                offset_origin_x="${offset_origin_x_const}"
+                offset_origin_y="${offset_origin_y_const}"
+                offset_origin_z="${offset_origin_z_const}"
+                finger_angle_r="-${5.0*DEG2RAD}"
+                />
+        <xacro:finger
+                finger_num="1"
+                offset_origin_x="${offset_origin_x_const}"
+                offset_origin_y="0"
+                offset_origin_z="${offset_origin_z_mid_const}"
+                finger_angle_r="0.0"
+                />
+        <xacro:finger
+                finger_num="${zero_left * 2}"
+                offset_origin_x="${offset_origin_x_const}"
+                offset_origin_y="-${offset_origin_y_const}"
+                offset_origin_z="${offset_origin_z_const}"
+                finger_angle_r="${5.0*DEG2RAD}"
+                />
+        <!-- THUMB -->
+        <xacro:thumb
+                finger_num="3"
+                offset_origin_x="-0.0182"
+                offset_origin_y="${minus_left * 0.019333}"
+                offset_origin_z="-0.045987"
+                finger_angle_r="0"
+                finger_angle_p="-${95*DEG2RAD}"
+                finger_angle_y="${minus_right * 90*DEG2RAD}"
+                />
+
+        <!-- ================================== SUPPORTS ================================== -->
+        <link name="${prefix}_base_screws"/>
+
+        <xacro:if value="${ur5_attachment}">
+            <link name="${prefix}_ur5_attachment">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/UR5_attachment.stl" scale="0.001 0.001 0.001"/>
+                    </geometry>
+                    <material name="darker_grey">
+                        <color rgba="0.7 0.7 0.7 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/UR5_attachment_bottom_collision.stl" scale="0.001 0.001 0.001"/>
+                    </geometry>
+                </collision>
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/UR5_attachment_top_collision.stl" scale="0.001 0.001 0.001"/>
+                    </geometry>
+                </collision>
+
+                <inertial>
+                    <mass value="0.2"/>
+                    <origin xyz="0.000 -0.000 0.015" rpy="0  0  0"/>
+                    <inertia ixx="1.01e-04" ixy="-1.20e-5" ixz="3.53e-5" iyy="1.04e-04" iyz="-4.03e-05" izz="1.17e-04"/>
+                </inertial>
+
+            </link>
+        </xacro:if>
+
+        <xacro:if value="${desk_stand}">
+            <link name="${prefix}_desk_stand">
+                <visual>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/Allegro_deskstand.stl" scale="0.001 0.001 0.001"/>
+                    </geometry>
+                    <material name="lighter_grey">
+                        <color rgba="0.8 0.8 0.8 1"/>
+                    </material>
+                </visual>
+
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/Allegro_deskstand_bottom_collision.stl" scale="0.001 0.001 0.001"/>
+                    </geometry>
+                </collision>
+                <collision>
+                    <geometry>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/Allegro_deskstand_top_collision.stl" scale="0.001 0.001 0.001"/>
+                    </geometry>
+                </collision>
+
+            <inertial>
+                <mass value="0.3"/>
+                <origin xyz="0.000 0.000 0.018" rpy="0  0  0"/>
+                <inertia ixx="7.09e-04" ixy="-1.32e-5" ixz="1.06e-5" iyy="7.09e-04" iyz="6.26e-5" izz="8.20e-04"/>
+            </inertial>
+
+            </link>
+        </xacro:if>
+
+
+        <!-- ================================== ORIGIN ================================== -->
+        <joint name="${prefix}_base_screws_joint" type="fixed">
+            <parent link="${prefix}_base_screws"/>
+            <child link="${prefix}_palm_link"/>
+            <origin rpy="0 0 ${90*DEG2RAD}" xyz="0 ${-palm_link_x} ${palm_link_z}"/>
+        </joint>
+
+        <!-- Desk stand -->
+        <xacro:if value="${desk_stand}">
+            <joint name="${prefix}_parent_joint" type="fixed">
+                <parent link="${parent}"/>
+                <child link="${prefix}_desk_stand"/>
+                <xacro:insert_block name="origin"/>
+            </joint>
+            <joint name="${prefix}_desk_stand_joint" type="fixed">
+                <parent link="${prefix}_desk_stand"/>
+                <child link="${prefix}_base_screws"/>
+                <origin rpy="0 0 0" xyz="0 0 0.119"/>
+            </joint>
+
+            <!-- And ur5 attachment -->
+            <xacro:if value="${ur5_attachment}">
+                <joint name="${prefix}_ur5_attachment_joint" type="fixed">
+                    <parent link="${prefix}_base_screws"/>
+                    <child link="${prefix}_ur5_attachment"/>
+                    <origin rpy="0 0 0" xyz="0 0 -0.05"/>
+                </joint>
+
+            </xacro:if>
+        </xacro:if>
+        <!-- No desk stand -->
+        <xacro:unless value="${desk_stand}">
+            <!-- But UR5 attachmet -->
+            <xacro:if value="${ur5_attachment}">
+                <joint name="${prefix}_ur5_attachment_joint" type="fixed">
+                    <parent link="${prefix}_ur5_attachment"/>
+                    <child link="${prefix}_base_screws"/>
+                    <origin rpy="0 0 0" xyz="0 0 0.05"/>
+                </joint>
+                <joint name="${prefix}_parent_joint" type="fixed">
+                    <parent link="${parent}"/>
+                    <child link="${prefix}_ur5_attachment"/>
+                    <xacro:insert_block name="origin"/>
+                </joint>
+
+            </xacro:if>
+            <!-- Nothing -->
+            <xacro:unless value="${ur5_attachment}">
+                <joint name="${prefix}_parent_joint" type="fixed">
+                    <parent link="${parent}"/>
+                    <child link="${prefix}_base_screws"/>
+                    <xacro:insert_block name="origin"/>
+                </joint>
+            </xacro:unless>
+        </xacro:unless>
+        <!-- ================================ ROS2 CONTROL =============================== -->
+
+        <xacro:allegro_hand_ros2_control name="${prefix}_allegro_hand_ros2_control" prefix="${prefix}" initial_positions_file="${init_pos_file}" real_hardware="${real_hardware}"/>
+
+        <!-- ============================= GAZEBO SIMULATION ============================= -->
+
+        <xacro:unless value="${real_hardware}">
+            <gazebo>
+                <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+                    <parameters>$(find allegro_hand_controllers)/config/default_pos_controller.yaml</parameters>
+                </plugin>
+            </gazebo>
+        </xacro:unless>
+
+    </xacro:macro>
+</robot>

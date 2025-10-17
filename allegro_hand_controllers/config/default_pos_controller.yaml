@@ -1,0 +1,52 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 111 # Up to 333 HZ
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    allegro_hand_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+allegro_hand_controller:
+  ros__parameters:
+    joints:
+      - _joint_00   
+      - _joint_01
+      - _joint_02
+      - _joint_03
+      - _joint_04
+      - _joint_05
+      - _joint_06
+      - _joint_07
+      - _joint_08
+      - _joint_09
+      - _joint_10
+      - _joint_11
+      - _joint_12
+      - _joint_13
+      - _joint_14
+      - _joint_15
+    command_interfaces:
+      - effort
+    state_interfaces:
+      - position
+      - velocity
+    # === Gains du PID ===
+    gains:
+      _joint_00: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_01: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_02: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_03: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_04: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_05: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_06: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_07: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_08: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_09: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_10: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_11: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_12: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_13: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_14: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}
+      _joint_15: {p: 5.0, i: 0.0, d: 0.2, i_clamp: 1.0}

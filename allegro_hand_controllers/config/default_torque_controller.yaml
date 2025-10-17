@@ -1,0 +1,35 @@
+joint_ff_controller:
+  type: joint_group_ff_controllers/JointGroupEffortFFController
+  joints:
+  - $(arg hand_name)_joint_00
+  - $(arg hand_name)_joint_01
+  - $(arg hand_name)_joint_02
+  - $(arg hand_name)_joint_03
+  - $(arg hand_name)_joint_04
+  - $(arg hand_name)_joint_05
+  - $(arg hand_name)_joint_06
+  - $(arg hand_name)_joint_07
+  - $(arg hand_name)_joint_08
+  - $(arg hand_name)_joint_09
+  - $(arg hand_name)_joint_10
+  - $(arg hand_name)_joint_11
+  - $(arg hand_name)_joint_12
+  - $(arg hand_name)_joint_13
+  - $(arg hand_name)_joint_14
+  - $(arg hand_name)_joint_15
+  $(arg hand_name)_joint_00 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_01 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_02 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_03 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_04 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_05 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_06 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_07 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_08 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_09 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_10 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_11 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_12 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_13 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_14 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled
+  $(arg hand_name)_joint_15 : { kp: 0, kd: 0, kp_safe: 5, kd_safe: 0.2 } # Feed-Forward only when controlled

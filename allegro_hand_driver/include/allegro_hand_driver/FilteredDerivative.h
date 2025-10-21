@@ -1,8 +1,6 @@
-/// Basic implementation of https://fr.mathworks.com/help/sps/ref/filteredderivativediscreteorcontinuous.html
-
 # pragma once
 #include <cassert>
-
+#include <cinttypes> 
 
 template<typename TimeType, typename ValueType>
 class FilteredDerivative {
@@ -10,7 +8,6 @@ class FilteredDerivative {
     FilteredDerivative() = default;
     virtual ~FilteredDerivative() = default;
 
-    // Default time constant is zero. Adding new point will raise exception. User needs to set it before.
     void set_time_constant(const TimeType constant);
     void new_point(const TimeType timestamp, const ValueType v);
 
@@ -18,6 +15,8 @@ class FilteredDerivative {
     ValueType get_value_filtered() const {return _value_filtered; }
     ValueType get_derivative_raw() const {return _derivative_raw; }
     ValueType get_derivative_filtered() const {return _derivative_filtered; }
+
+    TimeType get_last_time() const { return _timestamp; }
 
   private:
     bool _init                     = false;
@@ -50,6 +49,8 @@ void FilteredDerivative<TimeType, ValueType>::new_point(const TimeType timestamp
     const TimeType __sample_time = timestamp - _timestamp;
     const ValueType __alpha = (ValueType) __sample_time / _time_constant;
 
+    // printf("FILTER_DEBUG: ts_new=%" PRIu64 ", ts_old=%" PRIu64 ", sample_time=%" PRIu64 ", time_const=%" PRIu64 "\n",timestamp, _timestamp, __sample_time, _time_constant);
+    // printf("FILTER_DEBUG: alpha = %.4f\n", __alpha);
     // Prevent divinding by zero;
     assert(_time_constant);
     assert(__sample_time);

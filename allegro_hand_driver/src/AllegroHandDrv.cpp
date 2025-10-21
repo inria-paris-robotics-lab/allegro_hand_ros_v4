@@ -38,7 +38,8 @@
 #include <stdio.h>
 #include <string>
 #include <unistd.h>
-#include "candrv/candrv.h"
+#include <cstring>
+#include "allegro_hand_driver/candrv/candrv.h"
 #include "allegro_hand_driver/AllegroHandDrv.h"
 
 using namespace std;
@@ -61,6 +62,9 @@ using namespace std;
 
 #define FILTER_TIME_CONSTANT_US 15e3 // Filter smooth on ~15ms
 
+
+#include <cinttypes> 
+
 namespace allegro
 {
 
@@ -68,6 +72,7 @@ AllegroHandDrv::AllegroHandDrv()
     : _can_handle(0)
     , _curr_position_get(0)
     , _emergency_stop(false)
+    , _is_initialized(false)
 {
     for(int i=0;i<DOF_JOINTS;i++) {
         _curr_joint_values[i].set_time_constant(FILTER_TIME_CONSTANT_US);
@@ -200,11 +205,12 @@ void AllegroHandDrv::_readDevices()
     uint64_t t;
     int id;
     int len;
-    unsigned char data[8];
+    unsigned char data[8] = {0};
 
     err = CANAPI::can_read_message(_can_handle, &t, &id, &len, data, FALSE, 0);
     while (!err) {
         _parseMessage(t, id, len, data);
+        memset(data, 0, sizeof(data)); 
         err = CANAPI::can_read_message(_can_handle, &t, &id, &len, data, FALSE, 0);
     }
     //printf("can_read_message returns %d.", err); // PCAN_ERROR_QRCVEMPTY(32) from Peak CAN means "Receive queue is empty". It is not an error.
@@ -286,6 +292,9 @@ void AllegroHandDrv::_parseMessage(uint64_t timestamp_us, int id, int len, unsig
             _pwm_max[eJOINTNAME_THUMB_1] = min(_pwm_max_global, PWM_LIMIT_THUMB_NEAR);
             _pwm_max[eJOINTNAME_THUMB_2] = min(_pwm_max_global, PWM_LIMIT_THUMB_MIDDLE);
             _pwm_max[eJOINTNAME_THUMB_3] = min(_pwm_max_global, PWM_LIMIT_THUMB_FAR);
+
+            _is_initialized = true;
+            printf(">>>> AllegroHand Driver is Initialized and Ready <<<<\n");
         }
             break;
         case ID_RTR_SERIAL:
@@ -298,7 +307,10 @@ void AllegroHandDrv::_parseMessage(uint64_t timestamp_us, int id, int len, unsig
         case ID_RTR_FINGER_POSE_2:
         case ID_RTR_FINGER_POSE_3:
         case ID_RTR_FINGER_POSE_4:
-        {
+        {   
+            if (!_is_initialized) {
+                break; // On ignore les données de position pour l'instant
+            }
             const int findex = (id & 0x00000007); // Finger number
             const int lIndexBase = findex * 4; // Finger base joint index
 
@@ -306,14 +318,21 @@ void AllegroHandDrv::_parseMessage(uint64_t timestamp_us, int id, int len, unsig
             for(int k=0;k < 4;k++) {
                 const int kindex = lIndexBase + k; // current knuckle index
 
-                // Get raw position
-                const int _pos_fixed_point = (short) (data[k*2] | (data[(k*2)+1] << 8));
+                const uint64_t last_ts = _curr_joint_values[kindex].get_last_time();
 
-                // Compute the actual position in radian
-                const double _pos_floating_point = (double) _pos_fixed_point * ( 333.3 / 65536.0 ) * ( M_PI/180.0);
 
-                // Update stored values
-                _curr_joint_values[kindex].new_point(timestamp_us, _pos_floating_point);
+                if (timestamp_us > last_ts) 
+                {
+                    const int _pos_fixed_point = (short) (data[k*2] | (data[(k*2)+1] << 8));
+                    const double _pos_floating_point = (double) _pos_fixed_point * ( 333.3 / 65536.0 ) * ( M_PI/180.0);
+
+                    // Logging pour débogage (peut être retiré plus tard)
+                    // if (kindex == 1) {
+                        // printf("DEBUG PARSE (valid): ts=%" PRIu64 ", pos=%.4f\n", timestamp_us, _pos_floating_point);
+                    // }
+                    
+                    _curr_joint_values[kindex].new_point(timestamp_us, _pos_floating_point);
+                }
             }
 
             _curr_position_get |= (0x01 << (findex));

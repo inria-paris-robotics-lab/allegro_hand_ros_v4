@@ -1,0 +1,7 @@
+<library path="allegro_hand_interface">
+  <class name="allegro_hand_interface/AllegroHandHardwareInterface"
+         type="allegro_hand_interface::AllegroHandHardwareInterface"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>Hardware interface for Allegro Hand.</description>
+  </class>
+</library>

@@ -623,7 +623,7 @@
         </xacro:unless>
         <!-- ================================ ROS2 CONTROL =============================== -->
 
-        <xacro:allegro_hand_ros2_control name="${prefix}_allegro_hand_ros2_control" prefix="${prefix}" initial_positions_file="${init_pos_file}" real_hardware="${real_hardware}"/>
+        <xacro:allegro_hand_ros2_control name="allegro_hand" prefix="${prefix}" initial_positions_file="${init_pos_file}" use_real_hardware="${real_hardware}"/>
 
         <!-- ============================= GAZEBO SIMULATION ============================= -->
 

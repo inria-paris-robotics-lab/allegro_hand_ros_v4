@@ -29,9 +29,9 @@ typedef void* LPSTR;
 #include <net/if.h>
 #include <linux/net_tstamp.h>
 
-#include "candef.h"
-#include "candrv.h"
-#include <rclcpp/rclcpp.hpp> // for RCLCPP_ERROR, RCLCPP_INFO
+#include "allegro_hand_driver/candrv/candef.h"
+#include "allegro_hand_driver/candrv/candrv.h"
+// #include <rclcpp/rclcpp.hpp> // for RCLCPP_ERROR, RCLCPP_INFO
 
 CANAPI_BEGIN
 
@@ -55,7 +55,7 @@ unsigned char CAN_ID = 0;
 /*==========================================*/
 /*       Private functions prototypes       */
 /*==========================================*/
-int canReadMsg(void* /*ch*/, int *id, int *len, unsigned char *data, int blocking, int timeout_usec);
+int canReadMsg(void* /*ch*/, uint64_t *timestamp_us, int *id, int *len, unsigned char *data, int blocking, int timeout_usec);
 int canSendMsg(void* /*ch*/, int id, char len, unsigned char *data, int blocking, int timeout_usec);
 int canSentRTR(void* /*ch*/, int id, int blocking, int timeout_usec);
 
@@ -66,58 +66,58 @@ int socket_;
 
 void printMsg(const can_frame &msg)
 {
-    RCLCPP_WARN(rclcpp::get_logger(__FILE__), "msg: {%X}, %c", msg.can_id, msg.can_dlc);
+    printf("msg: {%X}, %c", msg.can_id, msg.can_dlc);
 }
 
 int canInit(const char *device_id_)
 {
     // Removed unused variable 'err'
     int i;
-    RCLCPP_INFO(rclcpp::get_logger(__FILE__), "CAN: Initializing device");
+    printf("CAN: Initializing device");
     sockaddr_can addr;
     ifreq ifr;
     if ((socket_ = socket(PF_CAN, SOCK_RAW, CAN_RAW)) == -1)
     {
-        RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "Failed to open CAN socket errno:%d", errno);
+        printf("Failed to open CAN socket errno:%d", errno);
         return -1;
     }
     strcpy(ifr.ifr_name, device_id_);
     if (ioctl(socket_, SIOCGIFINDEX, &ifr) == -1)
     {
-        RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "Trouble finding CAN bus %s: %s", device_id_, strerror(errno));
-        RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "Failed to initialize CAN interface");
+        printf("Trouble finding CAN bus %s: %s", device_id_, strerror(errno));
+        printf("Failed to initialize CAN interface");
         return -1;
     }
     addr.can_family = AF_CAN;
     addr.can_ifindex = ifr.ifr_ifindex;
-    RCLCPP_INFO(rclcpp::get_logger(__FILE__), "%s at index %d", device_id_, ifr.ifr_ifindex);
+    printf("%s at index %d", device_id_, ifr.ifr_ifindex);
     if (bind(socket_, (struct sockaddr *)&addr, sizeof(addr)) == -1)
     {
-        RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "Error binding CAN socket: %s", strerror(errno));
+        printf("Error binding CAN socket: %s", strerror(errno));
         return -1;
     }
     // Set socket non-blocking
     int flags = fcntl(socket_, F_GETFL);
     if (flags == -1)
     {
-        RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "Error getting CAN socket flags: %s", strerror(errno));
+        printf("Error getting CAN socket flags: %s", strerror(errno));
         return -1;
     }
     if (fcntl(socket_, F_SETFL, flags | O_NONBLOCK) != 0)
     {
-        RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "Error setting CAN socket non-blocking: %s", strerror(errno));
+        printf("Error setting CAN socket non-blocking: %s", strerror(errno));
         return -1;
     }
     // =========================================================================
     int timestamping_flags = SOF_TIMESTAMPING_RX_SOFTWARE | SOF_TIMESTAMPING_SOFTWARE;
     if (setsockopt(socket_, SOL_SOCKET, SO_TIMESTAMPING, &timestamping_flags, sizeof(timestamping_flags)) < 0)
     {
-        RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "Error setting SO_TIMESTAMPING for socket: %s", strerror(errno));
+        printf("Error setting SO_TIMESTAMPING for socket: %s", strerror(errno));
         return -1;
     }
-    RCLCPP_INFO(rclcpp::get_logger(__FILE__), "CAN: Timestamping enabled on socket.");
+    printf("CAN: Timestamping enabled on socket.");
     // =========================================================================
-    RCLCPP_INFO(rclcpp::get_logger(__FILE__), "CAN: Clearing the CAN buffer");
+    printf("CAN: Clearing the CAN buffer");
     can_frame dummy_msg;
     for (i = 0; i < 100; i++)
     {
@@ -130,8 +130,7 @@ int canReadMsg(void* /*ch*/, uint64_t *timestamp_us, int *id, int *len, unsigned
 {
     if (blocking || timeout_usec < 0)
     {
-        RCLCPP_WARN_ONCE(rclcpp::get_logger(__FILE__),
-                         "SOCKET CAN does not support blocking read, proceeding with nonblocking");
+        printf("SOCKET CAN does not support blocking read, proceeding with nonblocking");
     }
 
     struct msghdr msg_hdr;
@@ -161,38 +160,36 @@ int canReadMsg(void* /*ch*/, uint64_t *timestamp_us, int *id, int *len, unsigned
     {
         if (errno != EAGAIN) // EAGAIN signifie "pas de message disponible pour l'instant"
         {
-            RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "Error reading CAN socket with recvmsg: %s", strerror(errno));
+            printf("Error reading CAN socket with recvmsg: %s", strerror(errno));
         }
         return -1; // -1 pour "pas de message" ou "erreur"
     }
 
     if (result < static_cast<ssize_t>(sizeof(can_frame)))
     {
-        RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "Read incomplete CAN frame.");
+        printf("Read incomplete CAN frame.");
         return -1;
     }
 
-    // --- NOUVEAU: Extraction du timestamp ---
-    *timestamp_us = 0; // Initialiser à zéro
+    *timestamp_us = 0; 
     for (struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg_hdr); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg_hdr, cmsg))
     {
         if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SO_TIMESTAMPING)
         {
             struct timeval *tv = (struct timeval *)CMSG_DATA(cmsg);
-            *timestamp_us = (uint64_t)tv->tv_sec * 1000000 + (uint64_t)tv->tv_usec;
-            break; // On a trouvé le timestamp, on sort de la boucle
+            *timestamp_us = (uint64_t)tv->tv_sec * 1000000 + (uint64_t)tv->tv_usec/1000;
+            break; 
         }
     }
     
     if (*timestamp_us == 0) {
-        RCLCPP_WARN(rclcpp::get_logger(__FILE__), "Could not retrieve timestamp for CAN message.");
+        printf("Could not retrieve timestamp for CAN message.");
     }
     
-    // Le reste est identique à avant
     if (msg.can_id & CAN_ERR_FLAG)
     {
         printMsg(msg);
-        RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "Received CAN error.");
+        printf("Received CAN error.");
         return -1;
     }
 
@@ -200,7 +197,7 @@ int canReadMsg(void* /*ch*/, uint64_t *timestamp_us, int *id, int *len, unsigned
     *len = msg.can_dlc;
     memcpy(data, msg.data, msg.can_dlc);
 
-    return 0; // Succès
+    return 0; 
 }
 
 int canSendMsg(void* /*ch*/, int id, char len, unsigned char *data, int blocking, int timeout_usec)
@@ -212,13 +209,13 @@ int canSendMsg(void* /*ch*/, int id, char len, unsigned char *data, int blocking
     int result = write(socket_, &msg, sizeof(can_frame));
     if (result != sizeof(can_frame))
     {
-        RCLCPP_WARN(rclcpp::get_logger(__FILE__), "Failed to send CAN message: %s", strerror(errno));
+        printf("Failed to send CAN message: %s", strerror(errno));
         return -1;
     }
     if (blocking || timeout_usec < 0)
     {
-        RCLCPP_WARN_ONCE(rclcpp::get_logger(__FILE__),
-                         "Socket CAN does not support blocking send, proceed with nonblocking");
+        // RCLCPP_WARN_ONCE(rclcpp::get_logger(__FILE__),
+        //                  "Socket CAN does not support blocking send, proceed with nonblocking");
     }
     return 0;
 }
@@ -232,13 +229,13 @@ int canSentRTR(void* /*ch*/, int id, int blocking, int timeout_usec)
     int result = write(socket_, &msg, sizeof(can_frame));
     if (result != sizeof(can_frame))
     {
-        RCLCPP_WARN(rclcpp::get_logger(__FILE__), "Failed to send CAN message: %s", strerror(errno));
+        printf("Failed to send CAN message: %s", strerror(errno));
         return -1;
     }
     if (blocking || timeout_usec < 0)
     {
-        RCLCPP_WARN_ONCE(rclcpp::get_logger(__FILE__),
-                         "Socket CAN does not support blocking send, proceed with nonblocking");
+        // RCLCPP_WARN_ONCE(rclcpp::get_logger(__FILE__),
+        //                  "Socket CAN does not support blocking send, proceed with nonblocking");
     }
     return 0;
 }
@@ -248,22 +245,22 @@ int canSentRTR(void* /*ch*/, int id, int blocking, int timeout_usec)
 /*========================================*/
 int command_can_open_with_name(void*& /*ch*/, const char* dev_name)
 {
-    RCLCPP_INFO(rclcpp::get_logger(__FILE__),
-                "CAN: Opening device on channel [%s]", dev_name);
+    // RCLCPP_INFO(rclcpp::get_logger(__FILE__),
+    //             "CAN: Opening device on channel [%s]", dev_name);
     return canInit(dev_name);
 }
 
 int command_can_open(void* /*ch*/)
 {
-    RCLCPP_ERROR(rclcpp::get_logger(__FILE__),
-                 "CAN: Error! Unsupported function call, can_open(void*&)");
+    // RCLCPP_ERROR(rclcpp::get_logger(__FILE__),
+    //              "CAN: Error! Unsupported function call, can_open(void*&)");
     return -1;
 }
 
 int command_can_open_ex(void* /*ch*/, int /*type*/, int /*index*/)
 {
-    RCLCPP_ERROR(rclcpp::get_logger(__FILE__),
-                 "CAN: Error! Unsupported function call, can_open(void*&, int, int)");
+    // RCLCPP_ERROR(rclcpp::get_logger(__FILE__),
+    //              "CAN: Error! Unsupported function call, can_open(void*&, int, int)");
     return -1;
 }
 
@@ -287,7 +284,7 @@ int command_can_close(void* /*ch*/)
     int err = close(socket_);
     if (err)
     {
-        RCLCPP_ERROR(rclcpp::get_logger(__FILE__), "CAN: Error in CAN_Close()");
+        printf("CAN: Error in CAN_Close()");
         return -1;
     }
     return 0;

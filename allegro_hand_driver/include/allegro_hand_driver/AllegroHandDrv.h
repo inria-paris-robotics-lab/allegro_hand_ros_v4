@@ -67,7 +67,7 @@ public:
     int writeJointTorque();     ///< send joint command via CAN comm
     bool isJointInfoReady();    ///< return whether all joint positions are updated
     void resetJointInfoReady(); ///< reset joint position update flag
-
+    bool isInitialized(){return _is_initialized;}
 private:
     void* _can_handle; ///< CAN device(driver) handle
 
@@ -88,6 +88,7 @@ private:
     int    _motor_direction[DOF_JOINTS];    ///< motor direction
 
     volatile bool _emergency_stop;          ///< something goes wrong?
+    bool _is_initialized;
 
 private:
     void _readDevices();                    ///< read CAN messages

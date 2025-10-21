@@ -16,8 +16,7 @@
     <run_depend>allegro_hand_description</run_depend>
     <run_depend>allegro_hand_driver</run_depend>
 
-    <!-- The export tag contains other, unspecified, tags -->
-    <export>
-        <!-- Other tools can request additional information be placed here -->
-    </export>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

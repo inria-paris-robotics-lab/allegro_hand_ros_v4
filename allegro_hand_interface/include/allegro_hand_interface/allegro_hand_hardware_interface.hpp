@@ -19,6 +19,10 @@ namespace allegro {
 }
 
 namespace allegro_hand_interface{
+    enum class ControlState {
+        HOLDING,
+        EXTERNAL_CONTROL
+    };
     class AllegroHandHardwareInterface : public hardware_interface::SystemInterface{
     public:
         AllegroHandHardwareInterface();
@@ -35,16 +39,25 @@ namespace allegro_hand_interface{
         hardware_interface::return_type write(const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
     private: 
-        
+        double * set_pose(const std::vector<double> pose);
         std::unique_ptr<allegro::AllegroHandDrv> driver_;
 
+        std::vector<double> hw_initial_positions_;
         std::vector<double> hw_states_position_;
+        std::vector<double> hw_last_states_position_;
         std::vector<double> hw_states_velocity_;
         std::vector<double> hw_commands_effort_;
 
         std::string can_channel_name_;
         
         rclcpp::Logger logger_;
+
+        bool homing_in_progress_ = false;
+        double homing_kp_ = 4.0; 
+        double homing_kd_ = 0.2; 
+        double homing_tolerance_ = 0.05;
+        std::vector<double> homing_last_position_error_; 
+        ControlState control_state_ = ControlState::HOLDING;
     };
 
 } 

@@ -38,9 +38,7 @@ def launch_setup(context):
     
     can_setup_actions = [
         LogInfo(msg=["Configuring CAN interface: ", can_device]),
-        ExecuteProcess(cmd=['sudo', 'ip', 'link', 'set', can_device, 'down']),
-        ExecuteProcess(cmd=['sudo', 'ip', 'link', 'set', can_device, 'type', 'can', 'bitrate', '1000000']),
-        ExecuteProcess(cmd=['sudo', 'ip', 'link', 'set', can_device, 'up'])
+        ExecuteProcess(cmd=['sudo', 'ip', 'link', 'set', can_device,'up', 'type', 'can', 'bitrate', '1000000']),
     ]
 
     # --- Description du Robot (URDF) ---

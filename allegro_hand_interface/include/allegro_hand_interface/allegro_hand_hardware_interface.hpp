@@ -20,6 +20,7 @@ namespace allegro {
 
 namespace allegro_hand_interface{
     enum class ControlState {
+        HOMING,
         HOLDING,
         EXTERNAL_CONTROL
     };
@@ -52,7 +53,7 @@ namespace allegro_hand_interface{
         
         rclcpp::Logger logger_;
 
-        bool homing_in_progress_ = false;
+        bool homing_in_progress_ = true;
         double homing_kp_ = 4.0; 
         double homing_kd_ = 0.2; 
         double homing_tolerance_ = 0.05;

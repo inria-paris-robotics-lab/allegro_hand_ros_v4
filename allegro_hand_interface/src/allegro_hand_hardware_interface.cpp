@@ -34,11 +34,12 @@ namespace allegro_hand_interface
         const auto num_joints = info_.joints.size();
         hw_initial_positions_.resize(DOF_JOINTS, 0.0);
         hw_states_position_.resize(num_joints, 0.0);
+        hw_last_states_position_.resize(num_joints, 0.0);
         hw_states_velocity_.resize(num_joints, 0.0);
         hw_commands_effort_.resize(num_joints, 0.0);
         homing_last_position_error_.resize(num_joints, 0.0);
 
-        // CHech if every excepted interface is declared and available
+        // Check if every excepted interface is declared and available
         for (const auto & joint : info_.joints){
             if (joint.command_interfaces.size() != 1 || joint.command_interfaces[0].name != "effort"){
                 RCLCPP_FATAL(rclcpp::get_logger("AllegroHandHardware"), "The joint '%s' must have 1 'effort' command interface.", joint.name.c_str());
@@ -54,20 +55,19 @@ namespace allegro_hand_interface
 
         for (size_t i = 0; i < info_.joints.size(); ++i)
         {
-            // Le paramètre 'initial_value' est dans l'interface d'état 'position'
-            const auto& state_iface = info_.joints[i].state_interfaces[0]; // On suppose que 'position' est la première
+            // Get the init pose via state interface position param
+            const auto& state_iface = info_.joints[i].state_interfaces[0]; // We suppos that 'position' is the first 
             
-            // On cherche le paramètre
+            // we search for the param
             auto it = state_iface.parameters.find("initial_value");
             if (it != state_iface.parameters.end())
             {
-                // On convertit la chaîne de caractères en double et on la stocke
                 hw_initial_positions_[i] = std::stod(it->second);
-                RCLCPP_INFO(logger_, "  - Articulation '%s': %.4f rad", info_.joints[i].name.c_str(), hw_initial_positions_[i]);
+                RCLCPP_INFO(logger_, "  - Joint '%s': %.4f rad", info_.joints[i].name.c_str(), hw_initial_positions_[i]);
             }
             else
             {
-                RCLCPP_WARN(logger_, "Le paramètre 'initial_value' est manquant pour l'articulation '%s'. Utilisation de 0.0.", info_.joints[i].name.c_str());
+                RCLCPP_WARN(logger_, "The param 'initial_value' is missing for the joint '%s'. Using 0.0 as default value.", info_.joints[i].name.c_str());
             }
         }
 
@@ -81,11 +81,10 @@ namespace allegro_hand_interface
         // Init state and command
         for (size_t i = 0; i < hw_states_position_.size(); i++){
             hw_states_position_[i] = 0.0;
+            hw_last_states_position_[i] = 0.0;
             hw_states_velocity_[i] = 0.0;
             hw_commands_effort_[i] = 0.0;
         }
-        RCLCPP_INFO(logger_, "États matériels réinitialisés à zéro.");
-
         // Create driver element
         driver_ = std::make_unique<allegro::AllegroHandDrv>();
         if (!driver_){
@@ -101,110 +100,22 @@ namespace allegro_hand_interface
             return hardware_interface::CallbackReturn::ERROR;
         }
 
-        RCLCPP_INFO(logger_, "Waiting init response from the hand...");
         int retries = 0;
+        rclcpp::Rate rate(1000);  // 1 ms
         while (!driver_->isInitialized())
         {
             driver_->readCANFrames();
-            usleep(1000); 
-            if (retries++ > 1000) // Timeout 1s
-            {
-            RCLCPP_FATAL(logger_, "Timeout: Nothing receive from the hand");
-            driver_.reset();
-            return hardware_interface::CallbackReturn::ERROR;
+            rate.sleep();  // Non-blocking sleep, allows ROS 2 callbacks to run.
+            if (retries++ > 1000) {
+                RCLCPP_FATAL(logger_, "Timeout: Nothing received from the hand");
+                driver_.reset();
+                return hardware_interface::CallbackReturn::ERROR;
             }
+            RCLCPP_INFO(logger_, "Waiting init response from the hand...");
         }
 
-        RCLCPP_INFO(logger_, "Matériel activé. La procédure de Homing va commencer dans la boucle de contrôle.");
-
-        // Fréquence de contrôle cible pour notre boucle manuelle (ex: 200 Hz)
-        const auto control_period = std::chrono::microseconds(1000000 / 300);
-        auto last_update_time = std::chrono::high_resolution_clock::now();
-        bool is_homed = false;
-        int homing_cycle_count = 0;
-
-        while (!is_homed) // La boucle continue tant que le homing n'est pas terminé
-        {   
-            RCLCPP_INFO(logger_, "Homing en cours...");
-            // Sécurité pour éviter une boucle infinie en cas de problème et informer l'utilisateur
-            if (homing_cycle_count > 2000) { // Timeout après 10 secondes à 200Hz
-                RCLCPP_WARN(logger_, "Le Homing prend plus de 10 secondes. Vérifiez les gains ou un éventuel blocage physique.");
-                // On pourrait décider d'arrêter ici, mais on continue pour l'instant
-                // return hardware_interface::CallbackReturn::ERROR;
-                homing_cycle_count = 0; // Réinitialiser pour éviter de spammer
-            }
-
-            // --- Étape 1: Lire l'état actuel ---
-            driver_->readCANFrames();
-            if (driver_->isJointInfoReady())
-            {
-                double positions_temp[DOF_JOINTS], velocities_temp[DOF_JOINTS];
-                driver_->getJointInfo(positions_temp, velocities_temp);
-                for(size_t i=0; i<DOF_JOINTS; ++i) {
-                    hw_states_position_[i] = positions_temp[i];
-                    hw_states_velocity_[i] = velocities_temp[i];
-                }
-                driver_->resetJointInfoReady();
-            }
-
-            // --- Étape 2: Calculer la commande PD et vérifier la condition de fin ---
-            double torque_cmds[DOF_JOINTS] = {0.0};
-            is_homed = true; // On suppose que c'est fini, et on cherche une preuve du contraire
-            double dt = std::chrono::duration<double>(control_period).count();
-
-            for (size_t i = 0; i < DOF_JOINTS; ++i)
-            {
-                double position_error = hw_initial_positions_[i] - hw_states_position_[i];
-                double error_derivative = (position_error - homing_last_position_error_[i]) / dt;
-                
-                double desired_torque = homing_kp_ * position_error + homing_kd_ * error_derivative;
-                constexpr double MAX_HOMING_TORQUE = 0.3;
-                torque_cmds[i] = std::clamp(desired_torque, -MAX_HOMING_TORQUE, MAX_HOMING_TORQUE);
-
-                homing_last_position_error_[i] = position_error;
-
-                RCLCPP_INFO(logger_, "Homing Joint %lu: error %f pos %f rad",i,position_error,hw_states_position_[i]);
-                
-                if (std::abs(position_error) > homing_tolerance_) {
-                    is_homed = false; // Une articulation n'est pas arrivée, on doit continuer
-                }
-            }
-
-            // --- Étape 3: Envoyer la commande ---
-            driver_->setTorque(torque_cmds);
-            if (driver_->writeJointTorque() != 0) {
-                RCLCPP_ERROR(logger_, "Erreur lors de l'écriture du couple pendant le homing.");
-                return hardware_interface::CallbackReturn::ERROR; // Erreur critique, on arrête tout
-            }
-
-            // --- Étape 4: Attendre la fin du cycle de contrôle ---
-            last_update_time += control_period;
-            std::this_thread::sleep_until(last_update_time);
-            
-            homing_cycle_count++;
-        }
-        // =========================================================================
-        //                 FIN DE LA BOUCLE DE HOMING BLOQUANTE
-        // =========================================================================
-
-        RCLCPP_INFO(logger_, "Homing bloquant terminé avec succès.");
-
-        // Mettre à jour l'état final une dernière fois
-        driver_->readCANFrames();
-        if(driver_->isJointInfoReady()){
-            double p[DOF_JOINTS], v[DOF_JOINTS];
-            driver_->getJointInfo(p, v);
-            for(size_t i=0; i<DOF_JOINTS; ++i){
-                hw_states_position_[i] = p[i];
-                hw_states_velocity_[i] = v[i];
-            }
-            hw_last_states_position_ = hw_states_position_;
-            driver_->resetJointInfoReady();
-        }
-
-        control_state_ = ControlState::HOLDING;
-
-        RCLCPP_INFO(logger_, "Hand activée avec succès. Le ControllerManager peut démarrer.");
+        // Set starting State
+        control_state_ = ControlState::HOMING;
         RCLCPP_INFO(logger_, "Hand activate succesfully");
         return hardware_interface::CallbackReturn::SUCCESS;
     }
@@ -214,7 +125,6 @@ namespace allegro_hand_interface
         for (size_t i = 0; i < info_.joints.size(); i++){
             // Position
             state_interfaces.emplace_back(hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_POSITION, &hw_states_position_[i]));
-
             // Speed
             state_interfaces.emplace_back(hardware_interface::StateInterface(info_.joints[i].name, hardware_interface::HW_IF_VELOCITY, &hw_states_velocity_[i]));
         }
@@ -223,13 +133,11 @@ namespace allegro_hand_interface
 
     std::vector<hardware_interface::CommandInterface> AllegroHandHardwareInterface::export_command_interfaces(){
         std::vector<hardware_interface::CommandInterface> command_interfaces;
-
         for (size_t i = 0; i < info_.joints.size(); i++)
         {
             // Torque
             command_interfaces.emplace_back(hardware_interface::CommandInterface(info_.joints[i].name, hardware_interface::HW_IF_EFFORT, &hw_commands_effort_[i]));
         }
-
         return command_interfaces;
     }
 
@@ -241,27 +149,32 @@ namespace allegro_hand_interface
         if (!driver_->isJointInfoReady()){ // nothing new
             return hardware_interface::return_type::OK;
         }
-
         double positions_temp[DOF_JOINTS];
         double velocities_temp[DOF_JOINTS];
         driver_->getJointInfo(positions_temp, velocities_temp);
-
-        for (size_t i = 0; i < hw_states_position_.size(); i++) {
-            hw_states_position_[i] = positions_temp[i];
-            hw_states_velocity_[i] = velocities_temp[i];
+        if(control_state_==ControlState::HOMING){ // Prevent controller initialization during homing and have wrong init_pos.
+            for (size_t i = 0; i < hw_states_position_.size(); i++) {
+                hw_last_states_position_[i] = positions_temp[i];
+                hw_states_position_[i] = hw_initial_positions_[i];
+                hw_states_velocity_[i] = 0.0;
+            }
+        }
+        else{ // Normal operation
+            for (size_t i = 0; i < hw_states_position_.size(); i++) {
+                hw_states_position_[i] = positions_temp[i];
+                hw_states_velocity_[i] = velocities_temp[i];
+            }
+            if (control_state_ == ControlState::EXTERNAL_CONTROL){
+                hw_last_states_position_ = hw_states_position_;
+            }
         }
         driver_->resetJointInfoReady();
-        if (control_state_ == ControlState::EXTERNAL_CONTROL){
-            hw_last_states_position_ = hw_states_position_;
-        }
-
         return hardware_interface::return_type::OK;
     }
 
     hardware_interface::return_type AllegroHandHardwareInterface::write(const rclcpp::Time &, const rclcpp::Duration & period)
     {
-        
-        // On vérifie d'abord si une commande externe est arrivée
+        // Check if there is an external command
         bool external_command_active = false;
         for(const auto& effort : hw_commands_effort_) {
             if (effort != 0.0) {
@@ -269,51 +182,64 @@ namespace allegro_hand_interface
                 break;
             }
         }
+        // Declare these variables outside the switch so they are not redeclared
+        double torque_cmds[DOF_JOINTS] = {0.0};
+        double dt = period.seconds() > 0.0 ? period.seconds() : 0.01;
 
-        // --- MACHINE À ÉTATS ---
-        if (control_state_ == ControlState::HOLDING)
-        {
-            // --- PHASE 2: MAINTENIR LA POSITION "HOME" ---
-            if (external_command_active) {
-                RCLCPP_INFO(logger_, "Commande externe détectée. Passage en mode EXTERNAL_CONTROL.");
-                control_state_ = ControlState::EXTERNAL_CONTROL;
-                // On passe directement au cas suivant
-            } else {
-                // S'il n'y a pas de commande externe, on continue de maintenir la position Home
-                double torque_cmds[DOF_JOINTS] = {0.0};
-                double dt = period.seconds() > 0.0 ? period.seconds() : 0.01;
+        switch (control_state_){
+            case ControlState::HOMING:
+                homing_in_progress_ = false; // will be set to true if any joint is not homed yet
+                for (size_t i = 0; i < DOF_JOINTS; ++i)
+                {
+                    double position_error = hw_initial_positions_[i] - hw_last_states_position_[i];
+                    double error_derivative = (position_error - homing_last_position_error_[i]) / dt;
+                    double desired_torque = homing_kp_ * position_error + homing_kd_ * error_derivative;
+                    constexpr double MAX_HOMING_TORQUE = 0.3;
+                    torque_cmds[i] = std::clamp(desired_torque, -MAX_HOMING_TORQUE, MAX_HOMING_TORQUE);
+                    homing_last_position_error_[i] = position_error;
+                    // RCLCPP_INFO(logger_, "Homing Joint %lu: %f rad",i,hw_last_states_position_[i]);
 
+                    if (std::abs(position_error) > homing_tolerance_) {
+                        homing_in_progress_ = true; // At least one joint is not homed yet
+                    }
+                }
+                driver_->setTorque(torque_cmds);
+                if(!homing_in_progress_){
+                    RCLCPP_INFO(logger_, "Homing finished, passing to HOLDING mode.");
+                    control_state_= ControlState::HOLDING;
+                }
+                break;
+            case ControlState::EXTERNAL_CONTROL:
+                if (!external_command_active) {
+                    RCLCPP_INFO(logger_, "External command stopped. Returning to HOLDING mode.");
+                    control_state_ = ControlState::HOLDING;
+                }
+                driver_->setTorque(hw_commands_effort_.data());
+                break;
+            default: // HOLDING
+                // If there is no external command, continue to hold the Home position
+                if (external_command_active) {
+                    RCLCPP_INFO(logger_, "External command detected. Switching to EXTERNAL_CONTROL mode.");
+                    control_state_ = ControlState::EXTERNAL_CONTROL;
+                }
                 for (size_t i = 0; i < DOF_JOINTS; ++i) {
-                    RCLCPP_INFO(logger_, "Holding Joint %lu: %f rad",i,hw_last_states_position_[i]);
                     double position_error = hw_last_states_position_[i] - hw_states_position_[i];
                     double error_derivative = (position_error - homing_last_position_error_[i]) / dt;
                     torque_cmds[i] = homing_kp_ * position_error + homing_kd_ * error_derivative;
                     homing_last_position_error_[i] = position_error;
                 }
                 driver_->setTorque(torque_cmds);
-            }
+                break;
         }
-
-        if (control_state_ == ControlState::EXTERNAL_CONTROL)
-        {
-            // --- PHASE 3: SUIVRE LES COMMANDES EXTERNES ---
-            driver_->setTorque(hw_commands_effort_.data());
-            
-            // Optionnel: Revenir en mode HOLDING si la commande externe s'arrête
-            if (!external_command_active) {
-                RCLCPP_INFO(logger_, "La commande externe s'est arrêtée. Retour en mode HOLDING.");
-                control_state_ = ControlState::HOLDING;
-            }
-        }
-        
-        // Envoyer la commande de couple (soit du PD interne, soit du contrôleur externe) au matériel
+        // Send command
         if (driver_->writeJointTorque() != 0) {
-            RCLCPP_ERROR(logger_, "Erreur lors de l'écriture des couples sur le bus CAN.");
+            RCLCPP_ERROR(logger_, "Error writing torques to CAN bus.");
             return hardware_interface::return_type::ERROR;
         }
 
         return hardware_interface::return_type::OK;
     }
+
 
     hardware_interface::CallbackReturn AllegroHandHardwareInterface::on_deactivate(const rclcpp_lifecycle::State &){
         RCLCPP_INFO(logger_, "Disable allegro hand...");

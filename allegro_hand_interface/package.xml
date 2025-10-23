@@ -3,8 +3,8 @@
 <package format="3">
   <name>allegro_hand_interface</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="ros@todo.todo">ros</maintainer>
+  <description>Hardwrare interface for the Allegro Hand ROS2 driver</description>
+  <maintainer email="timothee.carecchio@inria.fr">timothee carecchio</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

@@ -6,7 +6,7 @@ find_package(ament_cmake REQUIRED)
 
 
 # Install xacro, world, and mesh files
-install(DIRECTORY launch script urdf DESTINATION share/${PROJECT_NAME})
+install(DIRECTORY launch urdf DESTINATION share/${PROJECT_NAME})
 
 # Install Python script(s)
 install(PROGRAMS

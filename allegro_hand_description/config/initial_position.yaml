@@ -2,7 +2,7 @@ initial_positions:
   joint_00: 0
   joint_10: 0
   joint_11: 0
-  joint_12: 0.25
+  joint_12: 0.5
   joint_13: 0
   joint_14: 0
   joint_15: 0

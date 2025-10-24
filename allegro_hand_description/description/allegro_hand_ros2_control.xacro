@@ -1,33 +1,32 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <xacro:macro name="allegro_hand_ros2_control" params="name prefix initial_positions_file use_real_hardware:=false use_sim_time:=false">
+  <xacro:macro name="allegro_hand_ros2_control" params="name prefix initial_positions_file use_real_hardware:=false">
     
     <xacro:property name="initial_positions" value="${xacro.load_yaml(initial_positions_file)['initial_positions']}"/>
 
     <ros2_control name="${name}" type="system">
 
       <!-- ========================================================== -->
-      <!--            SÉLECTION DU PLUGIN HARDWARE                    -->
+      <!--                     PLUGIN HARDWARE                        -->
       <!-- ========================================================== -->
       
-      <!-- CAS 1 : ROBOT RÉEL -->
-      <!-- <xacro:if value="${use_real_hardware}"> -->
-      <hardware>
-        <plugin>allegro_hand_interface/AllegroHandHardwareInterface</plugin>
-        <param name="CAN_CH">can0</param>
-        <!-- Ajoutez d'autres paramètres pour votre driver réel ici si nécessaire -->
-      </hardware>
-      <!-- </xacro:if> -->
+      <!-- CAS 1 : REEL ROBOT -->
+      <xacro:if value="${use_real_hardware}">
+        <hardware>
+          <plugin>allegro_hand_interface/AllegroHandHardwareInterface</plugin>
+          <param name="CAN_CH">can0</param>
+        </hardware>
+      </xacro:if>
 
-      <!-- CAS 2 : SIMULATION GAZEBO -->
-      <!-- <xacro:if value="${use_sim_time and not use_real_hardware}">
+      <!-- CAS 2 : GAZEBO SIMULATION -->
+      <xacro:unless value="${use_real_hardware}">
         <hardware>
           <plugin>gz_ros2_control/GazeboSimSystem</plugin>
         </hardware>
-      </xacro:if> -->
+      </xacro:unless>
       
-      <!-- CAS 3 : VISUALISATION RViz (MOCK) -->
+      <!-- CAS 3 : (MOCK) -->
       <!-- <xacro:unless value="${use_real_hardware or use_sim_time}">
         <hardware>
           <plugin>mock_components/GenericSystem</plugin>
@@ -35,7 +34,7 @@
       </xacro:unless> -->
 
       <!-- ========================================================== -->
-      <!--            DÉFINITION DES ARTICULATIONS                    -->
+      <!--                    JOINTS DEFINITION                       -->
       <!-- ========================================================== -->
       <xacro:macro name="joint_definition" params="joint_name initial_pos">
         <joint name="${prefix}_${joint_name}">
@@ -46,7 +45,7 @@
           <state_interface name="velocity"/>
         </joint>
       </xacro:macro>
-      <!-- On appelle la macro pour les 16 articulations -->
+      <!-- Call joint_definition macro for each joint -->
       <xacro:joint_definition joint_name="joint_00" initial_pos="joint_00" />
       <xacro:joint_definition joint_name="joint_01" initial_pos="joint_01" />
       <xacro:joint_definition joint_name="joint_02" initial_pos="joint_02" />

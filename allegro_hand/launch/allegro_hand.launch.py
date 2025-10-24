@@ -21,7 +21,6 @@ from launch.actions import (
     IncludeLaunchDescription,
     OpaqueFunction,
     ExecuteProcess,
-    RegisterEventHandler,
     LogInfo,
 
 )

@@ -13,7 +13,7 @@
   <!-- Root link -->
   <link name="world"/>
 
-  <xacro:allegro_hand chirality="$(arg chirality)" parent="world" real_hardware="$(arg real_hardware)" prefix="$(arg prefix)" ur5_attachment="true" desk_stand="true">
+  <xacro:allegro_hand chirality="$(arg chirality)" parent="world" real_hardware="$(arg real_hardware)" prefix="$(arg prefix)" ur5_attachment="true" desk_stand="true" standalone="true">
     <origin xyz="0.0 0.0 0" rpy="0.0 0 0.0"/>
   </xacro:allegro_hand>
 </robot>

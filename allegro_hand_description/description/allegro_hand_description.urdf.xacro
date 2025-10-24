@@ -3,7 +3,7 @@
 
     <xacro:include filename="$(find allegro_hand_description)/description/allegro_hand_ros2_control.xacro" />
 
-    <xacro:macro name="allegro_hand" params="chirality parent *origin prefix real_hardware:=false ur5_attachment:=false desk_stand:=false last_links_inertia_factor=1.0">
+    <xacro:macro name="allegro_hand" params="chirality parent *origin prefix real_hardware:=false ur5_attachment:=false desk_stand:=false standalone:=false">
 
         <!-- ======================== CHIRALITY PARAMS ========================= -->
         <xacro:property name="suffix" value="${chirality}"/>
@@ -88,11 +88,10 @@
 
             <inertial>
                 <origin xyz="0 0 ${palm_link_z/2}" rpy="0 0 0"/>
-                <mass value="0.4154"/>
-                <inertia
-                    ixx="1e-4" ixy="0.0" ixz="0.0"
-                    iyy="1e-4" iyz="0.0"
-                    izz="1e-4"/>
+                <mass value="4.1685782e-01"/>
+                <inertia ixx="1.3752240e-03" ixy="1.1841496e-05" ixz="-2.7306101e-04" 
+                iyx= "1.1841496e-05" iyy="1.2103623e-03" iyz="-2.3172379e-06" 
+                izx = "-2.7306101e-04" izy = "-2.3172379e-06" izz="6.2229538e-04"/>
             </inertial>
         </link>
 
@@ -120,10 +119,10 @@
                 </collision>
 
                 <inertial>
-                    <mass value="0.0176" />
-                    <origin xyz="0 0 0" rpy="0 0 0"/>
-                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
-                            iyz="0." izz="1e-5" />
+                    <mass value="7.9809876e-02"/>
+                    <inertia ixx="4.7114004e-05" ixy="-8.5650686e-06" ixz="-5.1403625e-06" 
+                    iyx= "-8.5650686e-06" iyy="2.9419559e-05" iyz="-1.2569682e-05" 
+                    izx = "-5.1403625e-06" izy = "-1.2569682e-05" izz="4.0511157e-05"/>
                 </inertial>
             </link>
 
@@ -157,10 +156,10 @@
                 </collision>
 
                 <inertial>
-                    <mass value="0.0119" />
-                    <origin xyz="0 0 0" rpy="0 0 0"/>
-                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
-                            iyz="0." izz="1e-5" />
+                    <mass value="1.1350110e-02"/>
+                    <inertia ixx="2.7007029e-06" ixy="3.1772015e-09" ixz="-9.9625696e-09" 
+                    iyx= "3.1772015e-09" iyy="2.0578543e-06" iyz="4.1823243e-09" 
+                    izx = "-9.9625696e-09" izy = "4.1823243e-09" izz=" 1.2713693e-06"/>
                 </inertial>
             </link>
 
@@ -193,10 +192,10 @@
                 </collision>
 
                 <inertial>
-                    <mass value="0.038" />
-                    <origin xyz="0 0 0" rpy="0 0 0"/>
-                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
-                            iyz="0." izz="1e-5" />
+                    <mass value="4.0206693e-02"/>
+                    <inertia ixx="4.3413941e-06" ixy="9.6355047e-07" ixz="-3.9856829e-07" 
+                    iyx= "9.6355047e-07" iyy="2.1797267e-05" iyz="-1.2313988e-08" 
+                    izx = "-3.9856829e-07" izy = "-1.2313988e-08" izz="2.0281187e-05"/>
                 </inertial>
             </link>
 
@@ -229,10 +228,10 @@
                 </collision>
 
                 <inertial>
-                    <mass value="0.0388" />
-                    <origin xyz="0 0 0" rpy="0 0 0"/>
-                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
-                                iyz="0." izz="1e-5" />
+                    <mass value=" 4.0750131e-02"/>
+                    <inertia ixx=" 3.9420540e-06" ixy="5.6337647e-07" ixz="-5.3566170e-08" 
+                    iyx= "   5.6337647e-07" iyy=" 1.6474691e-05" iyz="-1.8757848e-08" 
+                    izx = " -5.3566170e-08" izy = "-1.8757848e-08" izz="1.5477224e-05"/>
                 </inertial>
             </link>
 
@@ -265,11 +264,11 @@
                 </collision>
 
                 <inertial>
-                    <mass value="0.0168" />
                     <origin xyz="0 0 0" rpy="0 0 0"/>
-                    <inertia ixx="${last_links_inertia_factor * 9.680e-05}" ixy="0.0" ixz="0.0"
-                            iyy="${last_links_inertia_factor * 9.680e-05}" iyz="0.0"
-                            izz="${last_links_inertia_factor * 9.680e-05}" />
+                    <mass value="1.6654268e-02"/>
+                    <inertia ixx=" 1.4702815e-06" ixy=" 0.0000000e+00" ixz="0.0000000e+00" 
+                    iyx= "0.0000000e+00" iyy= " 3.8502616e-06" iyz="0.0000000e+00" 
+                    izx = "0.0000000e+00" izy = "0.0000000e+00" izz="3.8502616e-06"/>
                 </inertial>
             </link>
 
@@ -303,10 +302,10 @@
                 </collision>
 
                 <inertial>
-                    <mass value="0.0119" />
-                    <origin xyz="0 0 0" rpy="0 0 0"/>
-                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
-                            iyz="0." izz="1e-5" />
+                    <mass value="1.1350110e-02"/>
+                    <inertia ixx="2.7007029e-06" ixy=" 3.1772169e-09" ixz="-9.9625685e-09" 
+                    iyx= " 3.1772169e-09" iyy=" 2.0578543e-06" iyz="4.1823243e-09" 
+                    izx = "-9.9625685e-09" izy = " 4.1823243e-09" izz="1.2713693e-06"/>
                 </inertial>
             </link>
 
@@ -340,10 +339,10 @@
                 </collision>
 
                 <inertial>
-                    <mass value="0.065" />
-                    <origin xyz="0 0 0" rpy="0 0 0"/>
-                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
-                            iyz="0." izz="1e-5" />
+                    <mass value="7.1189096e-02"/>
+                    <inertia ixx="7.0483360e-06" ixy=" 2.7238745e-06" ixz="-5.7605847e-07" 
+                    iyx= " 2.7238745e-06" iyy=" 7.7935727e-05" iyz="2.1115155e-08" 
+                    izx = " -5.7605847e-07" izy = "2.1115155e-08" izz="7.6656552e-05"/>
                 </inertial>
             </link>
 
@@ -376,10 +375,10 @@
                 </collision>
 
                 <inertial>
-                    <mass value="0.0355" />
-                    <origin xyz="0 0 0" rpy="0 0 0"/>
-                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
-                            iyz="0." izz="1e-5" />
+                    <mass value="3.7588606e-02"/>
+                    <inertia ixx="3.8700419e-06" ixy=" 9.4859852e-07" ixz="-3.4727103e-07" 
+                    iyx= "  9.4859852e-07" iyy="  2.9392367e-05" iyz=" 4.1019588e-08" 
+                    izx = " -3.4727103e-07" izy = " 4.1019588e-08" izz="2.8178175e-05"/>
                 </inertial>
             </link>
 
@@ -412,10 +411,10 @@
                 </collision>
 
                 <inertial>
-                    <mass value="0.0096" />
-                    <origin xyz="0 0 0" rpy="0 0 0"/>
-                    <inertia ixx="1e-5" ixy="0." ixz="0." iyy="1e-5"
-                            iyz="0." izz="1e-5" />
+                    <mass value="9.4301124e-03"/>
+                    <inertia ixx=" 1.2117405e-06" ixy="9.9624823e-09" ixz="6.9119137e-10" 
+                    iyx= "9.9624823e-09" iyy="2.1794983e-06" iyz="3.1772815e-09" 
+                    izx = "6.9119137e-10" izy = "3.1772815e-09" izz="1.5590472e-06"/>
                 </inertial>
             </link>
 
@@ -448,11 +447,11 @@
                 </collision>
 
                 <inertial>
-                <mass value="0.0168" />
                     <origin xyz="0 0 0" rpy="0 0 0"/>
-                    <inertia ixx="${last_links_inertia_factor * 9.680e-05}" ixy="0.0" ixz="0.0"
-                            iyy="${last_links_inertia_factor * 9.680e-05}" iyz="0.0"
-                            izz="${last_links_inertia_factor * 9.680e-05}" />
+                    <mass value="1.6654268e-02"/>
+                    <inertia ixx="1.4702815e-06" ixy=" 0.0000000e+00" ixz="0.0000000e+00" 
+                    iyx= "0.0000000e+00" iyy= " 3.8502616e-06" iyz="0.0000000e+00" 
+                    izx = "0.0000000e+00" izy = "0.0000000e+00" izz="3.8502616e-06"/>
                 </inertial>
             </link>
 
@@ -627,13 +626,13 @@
 
         <!-- ============================= GAZEBO SIMULATION ============================= -->
 
-        <xacro:unless value="${real_hardware}">
+        <xacro:if value="${standalone}">
             <gazebo>
                 <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
                     <parameters>$(find allegro_hand_controllers)/config/default_pos_controller.yaml</parameters>
                 </plugin>
             </gazebo>
-        </xacro:unless>
+        </xacro:if>
 
     </xacro:macro>
 </robot>

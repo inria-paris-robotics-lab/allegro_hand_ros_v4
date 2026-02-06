@@ -82,7 +82,7 @@
 
             <collision>
                 <geometry>
-                    <mesh filename="file://$(find allegro_hand_description)/meshes/hand/base_link_${suffix}_collision.stl"/>
+                    <mesh filename="file://$(find allegro_hand_description)/meshes/hand/base_link_${suffix}.stl"/>
                 </geometry>
             </collision>
 
@@ -113,7 +113,7 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_12_${suffix}_collision.stl"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_12_${suffix}.stl"/>
                     </geometry>
                     <origin rpy="${zero_right * 180*DEG2RAD} 0 0" xyz="0 0 0"/>
                 </collision>
@@ -151,7 +151,7 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_13_collision.stl"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_13.stl"/>
                     </geometry>
                 </collision>
 
@@ -187,7 +187,7 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_14_collision.stl"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_14.stl"/>
                     </geometry>
                 </collision>
 
@@ -223,7 +223,7 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_15_collision.stl"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_15.stl"/>
                     </geometry>
                 </collision>
 
@@ -259,7 +259,7 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_15_tip_collision.stl"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_15_tip.stl"/>
                     </geometry>
                 </collision>
 
@@ -297,7 +297,7 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_0_collision.stl"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_0.stl"/>
                     </geometry>
                 </collision>
 
@@ -334,7 +334,7 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_1_collision.stl"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_1.stl"/>
                     </geometry>
                 </collision>
 
@@ -370,7 +370,7 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_2_collision.stl"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_2.stl"/>
                     </geometry>
                 </collision>
 
@@ -406,7 +406,7 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_3_collision.stl"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_3.stl"/>
                     </geometry>
                 </collision>
 
@@ -442,7 +442,7 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_3_tip_collision.stl"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/hand/link_3_tip.stl"/>
                     </geometry>
                 </collision>
 
@@ -515,12 +515,12 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/UR5_attachment_bottom_collision.stl" scale="0.001 0.001 0.001"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/UR5_attachment_bottom.stl" scale="0.001 0.001 0.001"/>
                     </geometry>
                 </collision>
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/UR5_attachment_top_collision.stl" scale="0.001 0.001 0.001"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/UR5_attachment_top.stl" scale="0.001 0.001 0.001"/>
                     </geometry>
                 </collision>
 
@@ -546,12 +546,12 @@
 
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/Allegro_deskstand_bottom_collision.stl" scale="0.001 0.001 0.001"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/Allegro_deskstand_bottom.stl" scale="0.001 0.001 0.001"/>
                     </geometry>
                 </collision>
                 <collision>
                     <geometry>
-                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/Allegro_deskstand_top_collision.stl" scale="0.001 0.001 0.001"/>
+                        <mesh filename="file://$(find allegro_hand_description)/meshes/support/Allegro_deskstand_top.stl" scale="0.001 0.001 0.001"/>
                     </geometry>
                 </collision>
 
